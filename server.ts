@@ -4,7 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 
-const app = express();
+export const app = express();
 const PORT = 3000;
 
 app.use(cors());
@@ -12,24 +12,37 @@ app.use(express.json());
 
 const DATA_FILE = path.join(process.cwd(), "user_data.json");
 
+// NOTE: On Netlify, local file storage is ephemeral and will be lost between function calls or redeploys.
+// For production use on Netlify, consider using a database like Firebase Firestore or MongoDB.
+
 // Helper to read/write data
 const readData = () => {
   if (!fs.existsSync(DATA_FILE)) return {};
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  } catch (e) {
+    return {};
+  }
 };
 
 const writeData = (data: any) => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("Failed to write data:", e);
+  }
 };
 
+const apiRouter = express.Router();
+
 // API Routes
-app.get("/api/user/:email", (req, res) => {
+apiRouter.get("/user/:email", (req, res) => {
   const { email } = req.params;
   const data = readData();
   res.json(data[email] || { streak: 0, bookmarks: [], listeningStats: { totalSeconds: 0, history: [] } });
 });
 
-app.post("/api/user/:email/sync", (req, res) => {
+apiRouter.post("/user/:email/sync", (req, res) => {
   const { email } = req.params;
   const { streak, bookmarks, lastVisitDate } = req.body;
   const data = readData();
@@ -45,7 +58,7 @@ app.post("/api/user/:email/sync", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.post("/api/user/:email/listen", (req, res) => {
+apiRouter.post("/user/:email/listen", (req, res) => {
   const { email } = req.params;
   const { sermonId, sermonTitle, albumTitle, durationSeconds } = req.body;
   const data = readData();
@@ -71,7 +84,7 @@ app.post("/api/user/:email/listen", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.get("/api/user/:email/wrapped", (req, res) => {
+apiRouter.get("/user/:email/wrapped", (req, res) => {
   const { email } = req.params;
   const data = readData();
   const user = data[email];
@@ -110,8 +123,8 @@ app.get("/api/user/:email/wrapped", (req, res) => {
 });
 
 // WordPress Proxy
-app.all("/api/wp-proxy/*", async (req, res) => {
-  const wpPath = req.params[0];
+apiRouter.all("/wp-proxy/*", async (req, res) => {
+  const wpPath = (req.params as any)[0];
   const query = req.url.split('?')[1] || '';
   const targetUrl = `https://christfamilymedia.org/wp-json/${wpPath}${query ? '?' + query : ''}`;
   
@@ -148,6 +161,8 @@ app.all("/api/wp-proxy/*", async (req, res) => {
   }
 });
 
+app.use("/api", apiRouter);
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -167,4 +182,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.NODE_ENV !== "production" || !process.env.NETLIFY) {
+  startServer();
+}
