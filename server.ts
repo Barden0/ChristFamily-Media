@@ -109,6 +109,45 @@ app.get("/api/user/:email/wrapped", (req, res) => {
   });
 });
 
+// WordPress Proxy
+app.all("/api/wp-proxy/*", async (req, res) => {
+  const wpPath = req.params[0];
+  const query = req.url.split('?')[1] || '';
+  const targetUrl = `https://christfamilymedia.org/wp-json/${wpPath}${query ? '?' + query : ''}`;
+  
+  try {
+    const fetchOptions: any = {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'ChristFamilyMedia-App/1.0',
+      }
+    };
+
+    if (req.headers.authorization) {
+      fetchOptions.headers['Authorization'] = req.headers.authorization;
+    }
+
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body && Object.keys(req.body).length > 0) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+    
+    const response = await fetch(targetUrl, fetchOptions);
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } else {
+      const text = await response.text();
+      res.status(response.status).send(text);
+    }
+  } catch (error: any) {
+    console.error('Proxy error:', error);
+    res.status(500).json({ error: 'Proxy error', message: error.message });
+  }
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

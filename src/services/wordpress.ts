@@ -1,7 +1,7 @@
 import { WPPost, Sermon, WPPlaylist, Playlist, Quote } from '../types';
 
-const WP_URL = 'https://christfamilymedia.org/wp-json/wp/v2';
-const JWT_URL = 'https://christfamilymedia.org/wp-json/jwt-auth/v1';
+const WP_URL = '/api/wp-proxy/wp/v2';
+const JWT_URL = '/api/wp-proxy/jwt-auth/v1';
 
 function decodeHtml(html: string) {
   return html

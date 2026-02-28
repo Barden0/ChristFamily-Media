@@ -6,9 +6,10 @@
   --font-serif: "Playfair Display", serif;
   --font-quote: "Lora", serif;
 
-  --color-brand: #7399A6;
-  --color-brand-dark: #233D47;
-  --color-brand-light: #A8C2CC;
+  --color-brand: #5A8C9C;
+  --color-brand-dark: #1A2F38;
+  --color-brand-light: #C5D9E0;
+  --color-brand-accent: #D97706; /* Warm amber for accents */
 }
 
 @layer base {

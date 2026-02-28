@@ -72,3 +72,18 @@ export interface WPPlaylist {
     _sonaar_tracks?: string;
   };
 }
+
+export interface UserProfile {
+  id: number;
+  username: string;
+  name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  url: string;
+  description: string;
+  link: string;
+  avatar_urls: {
+    [key: string]: string;
+  };
+}

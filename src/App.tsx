@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, Music2, BookOpen, Home, User, Disc, Library, Music, ArrowLeft, Heart, Flame, Bell, BellOff, ExternalLink, Moon, Sun, Monitor, Calendar } from 'lucide-react';
+import { Search, Menu, Music2, BookOpen, Home, User, Disc, Library, Music, ArrowLeft, Heart, Flame, Bell, BellOff, ExternalLink, Moon, Sun, Monitor, Calendar, Sparkles } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Sermon, Playlist, Quote } from './types';
 import { fetchSermons, fetchPlaylists, fetchQuotes, searchSermons } from './services/wordpress';
@@ -13,6 +13,7 @@ import { DailyQuote } from './components/DailyQuote';
 import { requestNotificationPermission } from './firebase';
 import { syncUserData, fetchUserData, fetchWrappedStats, ListeningStats } from './services/syncService';
 import { StatsModal } from './components/StatsModal';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
   const [sermons, setSermons] = useState<Sermon[]>([]);
@@ -116,7 +117,8 @@ export default function App() {
     const saved = localStorage.getItem('app_theme');
     return (saved as 'light' | 'dark' | 'system') || 'system';
   });
-  const userEmail = 'user@example.com'; // In a real app, this would come from auth
+  const { user: authUser } = useAuth();
+  const userEmail = authUser?.email || 'user@example.com';
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -247,7 +249,7 @@ export default function App() {
       const [sermonData, playlistData, quoteData] = await Promise.all([
         fetchSermons(1, 10),
         fetchPlaylists(1, 10),
-        fetchQuotes(1, 1)
+        fetchQuotes(1, 30) // Fetch a pool of quotes
       ]);
       
       if (sermonData.length < 10) setHasMoreSermons(false);
@@ -255,7 +257,18 @@ export default function App() {
       
       setSermons(sermonData);
       setPlaylists(playlistData);
-      if (quoteData && quoteData.length > 0) setDailyQuote(quoteData[0]);
+      
+      if (quoteData && quoteData.length > 0) {
+        // Pick a quote based on the day of the year to ensure it changes daily
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+        
+        const quoteIndex = dayOfYear % quoteData.length;
+        setDailyQuote(quoteData[quoteIndex]);
+      }
       setLoading(false);
     };
     loadData();
@@ -370,43 +383,47 @@ export default function App() {
 
             {/* Explore Section */}
             <section className="mb-10">
-              <h2 className="mb-4 font-serif text-2xl font-bold text-stone-900 dark:text-white">Explore</h2>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-serif text-2xl font-bold text-stone-900 dark:text-white">Explore</h2>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => setCurrentView('sermons')}
-                  className="flex flex-col items-center justify-center rounded-3xl bg-brand p-6 text-white shadow-lg shadow-brand/20 transition-transform active:scale-95"
+                  className="group relative flex flex-col items-center justify-center overflow-hidden rounded-[2.5rem] bg-stone-100 p-8 text-stone-900 shadow-sm transition-all hover:scale-[1.02] active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20">
-                    <Disc size={24} />
+                  <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-brand/5 blur-2xl group-hover:bg-brand/10 transition-colors" />
+                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5 shadow-inner">
+                    <Disc size={28} />
                   </div>
-                  <span className="font-bold">Sermons</span>
+                  <span className="text-lg font-bold">Sermons</span>
                 </button>
                 <button 
                   onClick={() => setCurrentView('series')}
-                  className="flex flex-col items-center justify-center rounded-3xl bg-stone-100 p-6 text-stone-900 shadow-sm transition-transform active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
+                  className="group relative flex flex-col items-center justify-center overflow-hidden rounded-[2.5rem] bg-stone-100 p-8 text-stone-900 shadow-sm transition-all hover:scale-[1.02] active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5">
-                    <Library size={24} />
+                  <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-brand/5 blur-2xl group-hover:bg-brand/10 transition-colors" />
+                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5 shadow-inner">
+                    <Library size={28} />
                   </div>
-                  <span className="font-bold">Series</span>
+                  <span className="text-lg font-bold">Series</span>
                 </button>
                 <button 
                   onClick={() => setCurrentView('music')}
-                  className="flex flex-col items-center justify-center rounded-3xl bg-stone-100 p-6 text-stone-900 shadow-sm transition-transform active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
+                  className="group relative flex flex-col items-center justify-center overflow-hidden rounded-[2.5rem] bg-stone-100 p-8 text-stone-900 shadow-sm transition-all hover:scale-[1.02] active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5">
-                    <Music size={24} />
+                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5">
+                    <Music size={28} />
                   </div>
-                  <span className="font-bold">Music</span>
+                  <span className="text-lg font-bold">Music</span>
                 </button>
                 <button 
                   onClick={() => setCurrentView('notes')}
-                  className="flex flex-col items-center justify-center rounded-3xl bg-stone-100 p-6 text-stone-900 shadow-sm transition-transform active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
+                  className="group relative flex flex-col items-center justify-center overflow-hidden rounded-[2.5rem] bg-stone-100 p-8 text-stone-900 shadow-sm transition-all hover:scale-[1.02] active:scale-95 dark:bg-stone-900 dark:text-white dark:border dark:border-white/5"
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5">
-                    <BookOpen size={24} />
+                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-900/5 dark:bg-white/5">
+                    <BookOpen size={28} />
                   </div>
-                  <span className="font-bold">Notes</span>
+                  <span className="text-lg font-bold">Notes</span>
                 </button>
               </div>
             </section>
@@ -744,35 +761,37 @@ export default function App() {
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-stone-900 transition-colors duration-300 dark:bg-stone-950 dark:text-stone-50">
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-stone-50/80 px-6 py-4 backdrop-blur-md dark:bg-stone-950/80">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">{getGreeting()},</span>
-          <h1 className="font-serif text-xl font-bold text-stone-900 dark:text-white">Friend</h1>
-        </div>
-        <div className="flex gap-4">
-          {streak > 0 && (
+      <header className="sticky top-0 z-40 bg-stone-50/80 backdrop-blur-md dark:bg-stone-950/80">
+        <div className="mx-auto flex max-w-lg items-center justify-between px-6 py-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">{getGreeting()},</span>
+            <h1 className="font-serif text-xl font-bold text-stone-900 dark:text-white">Beloved</h1>
+          </div>
+          <div className="flex gap-4">
+            {streak > 0 && (
+              <button 
+                onClick={() => setIsStatsModalOpen(true)}
+                className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-orange-600 shadow-sm transition-transform active:scale-90 dark:bg-orange-500/10 dark:text-orange-400"
+              >
+                <Flame size={16} fill="currentColor" />
+                <span className="text-xs font-bold">{streak}</span>
+              </button>
+            )}
             <button 
-              onClick={() => setIsStatsModalOpen(true)}
-              className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-orange-600 shadow-sm transition-transform active:scale-90 dark:bg-orange-500/10 dark:text-orange-400"
+              onClick={() => setIsSearchOpen(true)}
+              className="rounded-full bg-white p-2 text-stone-600 shadow-sm transition-transform active:scale-90 dark:bg-stone-800 dark:text-stone-400"
             >
-              <Flame size={16} fill="currentColor" />
-              <span className="text-xs font-bold">{streak}</span>
+              <Search size={20} />
             </button>
-          )}
-          <button 
-            onClick={() => setIsSearchOpen(true)}
-            className="rounded-full bg-white p-2 text-stone-600 shadow-sm transition-transform active:scale-90 dark:bg-stone-800 dark:text-stone-400"
-          >
-            <Search size={20} />
-          </button>
-          <button className="rounded-full bg-white p-2 text-stone-600 shadow-sm transition-transform active:scale-90 dark:bg-stone-800 dark:text-stone-400">
-            <Bell size={20} />
-          </button>
+            <button className="rounded-full bg-white p-2 text-stone-600 shadow-sm transition-transform active:scale-90 dark:bg-stone-800 dark:text-stone-400">
+              <Bell size={20} />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="px-6 pb-40 pt-4">
+      <main className="mx-auto max-w-lg px-6 pb-40 pt-4">
         {renderContent()}
       </main>
 

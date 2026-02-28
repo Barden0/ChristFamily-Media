@@ -72,24 +72,24 @@ export const SermonCard: React.FC<SermonCardProps> = ({ sermon, isBookmarked, on
         )}
       </div>
 
-      <div className="flex flex-col p-3 sm:p-5">
-        <div className="mb-1.5 flex flex-wrap gap-1.5">
+      <div className="flex flex-col p-4 sm:p-6">
+        <div className="mb-2 flex flex-wrap gap-2">
           {sermon.categories.slice(0, 1).map((cat) => (
-            <span key={cat} className="rounded-full bg-stone-100 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+            <span key={cat} className="rounded-full bg-brand/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-brand dark:bg-brand/20">
               {cat}
             </span>
           ))}
         </div>
         
         <h3 
-          className="mb-2 line-clamp-2 font-serif text-sm sm:text-lg font-medium leading-tight text-stone-900 dark:text-white"
+          className="mb-3 line-clamp-2 font-serif text-base sm:text-xl font-bold leading-tight text-stone-900 dark:text-white"
           dangerouslySetInnerHTML={{ __html: sermon.title }}
         />
         
-        <div className="mt-auto flex items-center gap-3 text-[10px] text-stone-400">
-          <div className="flex items-center gap-1">
-            <Calendar size={12} />
-            <span>{format(new Date(sermon.date), 'MMM d')}</span>
+        <div className="mt-auto flex items-center justify-between text-[11px] font-medium text-stone-400">
+          <div className="flex items-center gap-1.5">
+            <Calendar size={14} className="text-stone-300" />
+            <span>{format(new Date(sermon.date), 'MMMM d, yyyy')}</span>
           </div>
         </div>
       </div>
