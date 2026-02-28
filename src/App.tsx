@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Menu, Music2, BookOpen, Home, User, Disc, Library, Music, ArrowLeft, Heart, Flame, Bell, BellOff, ExternalLink, Moon, Sun, Monitor, Calendar, Sparkles } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Sermon, Playlist, Quote } from './types';
-import { fetchSermons, fetchPlaylists, fetchQuotes, searchSermons } from './services/wordpress';
+import { fetchSermons, fetchPlaylists, fetchQuotes, searchSermons, fetchSermonsByIds } from './services/wordpress';
 import { SermonCard } from './components/SermonCard';
 import { SermonDetail } from './components/SermonDetail';
 import { AudioPlayer } from './components/AudioPlayer';
@@ -229,14 +229,12 @@ export default function App() {
       setLoadingBookmarks(true);
       const postIds = bookmarks.filter((id): id is number => typeof id === 'number');
       
-      import('./services/wordpress').then(({ fetchSermonsByIds }) => {
-        fetchSermonsByIds(postIds).then(data => {
-          // For track bookmarks (string IDs), we might want to store their full data in localStorage
-          // but for now let's just show the post bookmarks. 
-          // In a real app, we'd fetch or cache the track data too.
-          setBookmarkedSermons(data);
-          setLoadingBookmarks(false);
-        });
+      fetchSermonsByIds(postIds).then(data => {
+        // For track bookmarks (string IDs), we might want to store their full data in localStorage
+        // but for now let's just show the post bookmarks. 
+        // In a real app, we'd fetch or cache the track data too.
+        setBookmarkedSermons(data);
+        setLoadingBookmarks(false);
       });
     } else if (activeTab === 'profile' && bookmarks.length === 0) {
       setBookmarkedSermons([]);
